@@ -224,58 +224,10 @@ AnomalyDetectionVec = function(x, max_anoms=0.10, direction='pos',
   # If there are no anoms, then let's exit
   if(anom_pct == 0){
     if(verbose) message("No anomalies detected.")
-    return (list("anoms"=data.frame(), "plot"=plot.new()))
+    return (list("anoms"=data.frame(), "plot"=list()))
   }
   
-  if(plot){
-    # -- Build title for plots utilizing parameters set by user
-    plot_title <-  paste(title, round(anom_pct, digits=2), "% Anomalies (alpha=", alpha, ", direction=", direction,")", sep="")
-    if(!is.null(longterm_period)){
-      plot_title <- paste(plot_title, ", longterm=T", sep="")
-    }
-    
-    # -- Plot raw time series data
-    color_name <- paste("\"", title, "\"", sep="")
-    alpha <- 0.8
-    if(only_last){    
-      all_data <- rbind(x_subset_previous, x_subset_single_period)
-      lines_at <- seq(1, length(all_data[[2]]), period)+min(all_data[[1]])
-      xgraph <- ggplot2::ggplot(all_data, ggplot2::aes_string(x="timestamp", y="count")) + ggplot2::theme_bw() + ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(), text=ggplot2::element_text(size = 14))
-      xgraph <- xgraph + ggplot2::geom_line(data=x_subset_previous, ggplot2::aes_string(colour=color_name), alpha=alpha*.33) + ggplot2::geom_line(data=x_subset_single_period, ggplot2::aes_string(color=color_name), alpha=alpha)    
-      yrange <- get_range(all_data, index=2, y_log=y_log)
-      xgraph <- xgraph + ggplot2::scale_x_continuous(breaks=lines_at, expand=c(0,0))
-      xgraph <- xgraph + ggplot2::geom_vline(xintercept=lines_at, color="gray60")
-      xgraph <- xgraph + ggplot2::labs(x=xlabel, y=ylabel, title=plot_title)    
-    }else{
-      num_periods <- num_obs/period
-      lines_at <- seq(1, num_obs, period)
 
-      # check to see that we don't have too many breaks
-      inc <- 2
-      while(num_periods > 14){
-        num_periods <- num_obs/(period*inc)
-        lines_at <- seq(1, num_obs, period*inc)
-        inc <- inc + 1
-      }
-      xgraph <- ggplot2::ggplot(x, ggplot2::aes_string(x="timestamp", y="count")) + ggplot2::theme_bw() + ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(), text=ggplot2::element_text(size = 14))
-      xgraph <- xgraph + ggplot2::geom_line(data=x, ggplot2::aes_string(colour=color_name), alpha=alpha)
-      yrange <- get_range(x, index=2, y_log=y_log)
-      xgraph <- xgraph + ggplot2::scale_x_continuous(breaks=lines_at, expand=c(0,0))
-      xgraph <- xgraph + ggplot2::geom_vline(xintercept=lines_at, color="gray60")
-      xgraph <- xgraph + ggplot2::labs(x=xlabel, y=ylabel, title=plot_title)
-    }
-    
-    # Add anoms to the plot as circles.
-    # We add zzz_ to the start of the name to ensure that the anoms are listed after the data sets.
-    xgraph <- xgraph + ggplot2::geom_point(data=all_anoms, ggplot2::aes_string(color=paste("\"zzz_",title,"\"",sep="")), size = 3, shape = 1) 
-    
-    # Hide legend and timestamps
-    xgraph <- xgraph + ggplot2::theme(axis.text.x=ggplot2::element_blank()) + ggplot2::theme(legend.position="none") 
-    
-    # Use log scaling if set by user
-    xgraph <- xgraph + add_formatted_y(yrange, y_log=y_log)
-  }
-  
   # Store expected values if set by user
   if(e_value) {
     anoms <- data.frame(index=all_anoms[[1]], anoms=all_anoms[[2]], expected_value=subset(seasonal_plus_trend[[2]], seasonal_plus_trend[[1]] %in% all_anoms[[1]]))  
@@ -285,6 +237,6 @@ AnomalyDetectionVec = function(x, max_anoms=0.10, direction='pos',
   
   # Lastly, return anoms and optionally the plot if requested by the user
   if(plot){
-    return (list(anoms = anoms, plot = xgraph))
+    return (list(anoms = anoms, plot = list()))
   }
 }
